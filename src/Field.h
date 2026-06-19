@@ -6,7 +6,7 @@
  * методы для вывода на экран (print, printRus, printInt, printIntBlink, clearField и др.).
  * Также требуется метод getMillis() для работы с временем.
  * Добавлены подсказки для автоматического размещения: _rowHint (строка) и _isLabel (заголовок).
- * Виртуальные функции заменены на статический полиморфизм для экономии памяти.
+ * Виртуальные функции сохранены для корректного полиморфного вызова через указатель на Field.
  */
 #ifndef FIELD_H
 #define FIELD_H
@@ -47,12 +47,12 @@ public:
         : _col(col), _row(row), _label(label), _useRusPrint(rus), _fieldId(id), _disp(disp),
           _rowHint(rowHint), _isLabel(isLabel) {}
 
-    // Конкретные методы теперь определяются в наследниках без virtual
-    // Для совместимости оставляем пустые заглушки (они не вызываются)
-    void draw(bool editMode, int cursorPos, bool blinkState) {}
-    void modifyDigit(int delta, int cursorPos) {}
-    int getMaxDigits() { return 0; }
-    uint8_t getWidth() const { return 0; }
+    virtual ~Field() {}
+
+    virtual void draw(bool editMode, int cursorPos, bool blinkState) = 0;
+    virtual void modifyDigit(int delta, int cursorPos) {}
+    virtual int getMaxDigits() { return 0; }
+    virtual uint8_t getWidth() const = 0;
 
     int getFieldId() const { return _fieldId; }
     bool isEditable() const { return _fieldId >= 0; }
@@ -69,13 +69,13 @@ public:
                uint8_t rowHint = 0)
         : Field<Display>(col, row, label, rus, -1, disp, rowHint, true) {}
 
-    void draw(bool, int, bool) {
+    void draw(bool, int, bool) override {
         this->_disp.setCursor(this->_col, this->_row);
         if (this->_useRusPrint) this->_disp.printRus(this->_label);
         else this->_disp.print(this->_label);
     }
 
-    uint8_t getWidth() const {
+    uint8_t getWidth() const override {
         return strlen(this->_label);
     }
 };
@@ -89,7 +89,7 @@ public:
              int maxDigits, Display& disp, uint8_t rowHint = 0)
         : Field<Display>(col, row, label, false, fieldId, disp, rowHint), _value(val), _maxDigits(maxDigits) {}
 
-    void draw(bool editMode, int cursorPos, bool blinkState) {
+    void draw(bool editMode, int cursorPos, bool blinkState) override {
         this->_disp.setCursor(this->_col, this->_row);
         this->_disp.print(this->_label);
         int len = SimpleLCDUI_Utils::digits(*_value);
@@ -101,7 +101,7 @@ public:
         else this->_disp.printInt(*_value);
     }
 
-    void modifyDigit(int delta, int cursorPos) {
+    void modifyDigit(int delta, int cursorPos) override {
         int len = SimpleLCDUI_Utils::digits(*_value);
         if (cursorPos >= len) cursorPos = len - 1;
         int pos = len - 1 - cursorPos;
@@ -115,8 +115,8 @@ public:
         *_value = neg ? -av : av;
     }
 
-    int getMaxDigits() { return _maxDigits; }
-    uint8_t getWidth() const { return strlen(this->_label) + _maxDigits; }
+    int getMaxDigits() override { return _maxDigits; }
+    uint8_t getWidth() const override { return strlen(this->_label) + _maxDigits; }
 };
 
 template<typename Display>
@@ -130,7 +130,7 @@ public:
         : Field<Display>(col, row, label, false, fieldId, disp, rowHint), _value(val),
           _minVal(minV), _maxVal(maxV), _width(width) {}
 
-    void draw(bool editMode, int cursorPos, bool blinkState) {
+    void draw(bool editMode, int cursorPos, bool blinkState) override {
         this->_disp.setCursor(this->_col, this->_row);
         this->_disp.print(this->_label);
         this->_disp.setCursor(this->_col + strlen(this->_label), this->_row);
@@ -142,12 +142,12 @@ public:
         else this->_disp.print(buf);
     }
 
-    void modifyDigit(int delta, int cursorPos) {
+    void modifyDigit(int delta, int cursorPos) override {
         *_value = SimpleLCDUI_Utils::clamp(*_value + delta, _minVal, _maxVal);
     }
 
-    int getMaxDigits() { return _width; }
-    uint8_t getWidth() const { return strlen(this->_label) + _width; }
+    int getMaxDigits() override { return _width; }
+    uint8_t getWidth() const override { return strlen(this->_label) + _width; }
 };
 
 template<typename Display>
@@ -158,7 +158,7 @@ public:
                uint8_t rowHint = 0)
         : Field<Display>(col, row, label, false, -1, disp, rowHint), _value(val) {}
 
-    void draw(bool, int, bool) {
+    void draw(bool, int, bool) override {
         this->_disp.setCursor(this->_col, this->_row);
         this->_disp.print(this->_label);
         char buf[10];
@@ -167,7 +167,7 @@ public:
         this->_disp.print(" ");
     }
 
-    uint8_t getWidth() const {
+    uint8_t getWidth() const override {
         return strlen(this->_label) + 6;   // "X.XXX " (5 + 1 пробел)
     }
 };
@@ -180,7 +180,7 @@ public:
               uint8_t rowHint = 0)
         : Field<Display>(col, row, label, false, -1, disp, rowHint), _value(val) {}
 
-    void draw(bool, int, bool) {
+    void draw(bool, int, bool) override {
         this->_disp.setCursor(this->_col, this->_row);
         this->_disp.print(this->_label);
         int whole = (int)(*_value);
@@ -192,7 +192,7 @@ public:
         this->_disp.print(" ");
     }
 
-    uint8_t getWidth() const {
+    uint8_t getWidth() const override {
         return strlen(this->_label) + 6;   // "XX.XX " (5 + 1 пробел)
     }
 };
@@ -205,14 +205,14 @@ public:
                  uint8_t rowHint = 0)
         : Field<Display>(col, row, label, false, -1, disp, rowHint), _value(val) {}
 
-    void draw(bool, int, bool) {
+    void draw(bool, int, bool) override {
         this->_disp.setCursor(this->_col, this->_row);
         this->_disp.print(this->_label);
         this->_disp.printInt(*_value);
         this->_disp.print("  ");
     }
 
-    uint8_t getWidth() const {
+    uint8_t getWidth() const override {
         return strlen(this->_label) + 7;   // "XXXXX  " (5 цифр + 2 пробела)
     }
 };
@@ -225,7 +225,7 @@ public:
                 uint8_t rowHint = 0)
         : Field<Display>(col, row, "", false, fieldId, disp, rowHint), _value(val) {}
 
-    void draw(bool editMode, int cursorPos, bool blinkState) {
+    void draw(bool editMode, int cursorPos, bool blinkState) override {
         this->_disp.setCursor(this->_col, this->_row);
         if (editMode && !blinkState) {
             for (int i = 0; i < 4; i++) this->_disp.write(' ');
@@ -234,9 +234,9 @@ public:
         }
     }
 
-    void modifyDigit(int delta, int cursorPos) { *_value = !(*_value); }
-    int getMaxDigits() { return 1; }
-    uint8_t getWidth() const { return 4; }
+    void modifyDigit(int delta, int cursorPos) override { *_value = !(*_value); }
+    int getMaxDigits() override { return 1; }
+    uint8_t getWidth() const override { return 4; }
 };
 
 template<typename Display>
@@ -248,7 +248,7 @@ public:
                    int width, Display& disp, uint8_t rowHint = 0)
         : Field<Display>(col, row, label, false, fieldId, disp, rowHint), _value(val), _width(width) {}
 
-    void draw(bool editMode, int cursorPos, bool blinkState) {
+    void draw(bool editMode, int cursorPos, bool blinkState) override {
         this->_disp.setCursor(this->_col, this->_row);
         this->_disp.print(this->_label);
         this->_disp.setCursor(this->_col + strlen(this->_label), this->_row);
@@ -270,13 +270,13 @@ public:
         }
     }
 
-    void modifyDigit(int delta, int cursorPos) {
+    void modifyDigit(int delta, int cursorPos) override {
         *_value += delta * 0.01f;
         if (*_value < 0) *_value = 0;
         if (*_value > 99.99f) *_value = 99.99f;
     }
-    int getMaxDigits() { return _width; }
-    uint8_t getWidth() const { return strlen(this->_label) + _width; }
+    int getMaxDigits() override { return _width; }
+    uint8_t getWidth() const override { return strlen(this->_label) + _width; }
 };
 
 #endif
