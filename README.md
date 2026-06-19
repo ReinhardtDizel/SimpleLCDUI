@@ -81,7 +81,7 @@ void loop() {
   // ...
   ui.update();
 }
-```cpp
+```
 See the examples folder for a complete working example.
 
 Dependencies
