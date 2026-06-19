@@ -20,15 +20,15 @@
 namespace SimpleLCDUI_Utils {
     /** Ограничение значения диапазоном [lo, hi] */
     template <typename T> T clamp(T val, T lo, T hi) { return val < lo ? lo : val > hi ? hi : val; }
-    /** Модуль числа */
-    template <typename T> T abs(T x) { return x < 0 ? -x : x; }
+    /** Модуль числа (переименован из abs для избежания конфликта с Arduino) */
+    template <typename T> T absVal(T x) { return x < 0 ? -x : x; }
     /** Целочисленная степень 10 */
     inline int32_t pow10(int e) { int32_t r=1; while(e--) r*=10; return r; }
     /** Количество десятичных разрядов (0 -> 1) */
-    inline int digits(int32_t x) { if(!x) return 1; x = abs(x); int n=0; while(x){ n++; x/=10; } return n; }
+    inline int digits(int32_t x) { if(!x) return 1; x = absVal(x); int n=0; while(x){ n++; x/=10; } return n; }
     /** Преобразование float в строку с тремя знаками после запятой */
     inline void floatToFixed3(float v, char* buf, int sz) {
-        int w = (int)v; int f = abs((int)((v - w) * 1000));
+        int w = (int)v; int f = absVal((int)((v - w) * 1000));
         snprintf(buf, sz, "%d.%03d", w, f);
     }
 }
@@ -138,10 +138,10 @@ public:
         if (cursorPos >= len) cursorPos = len - 1;
         int pos = len - 1 - cursorPos;
         int divisor = SimpleLCDUI_Utils::pow10(pos);
-        int digit = (SimpleLCDUI_Utils::abs(*_value) / divisor) % 10;
+        int digit = (SimpleLCDUI_Utils::absVal(*_value) / divisor) % 10;
         digit = (digit + delta + 10) % 10;
         bool neg = (*_value < 0);
-        int32_t av = SimpleLCDUI_Utils::abs(*_value);
+        int32_t av = SimpleLCDUI_Utils::absVal(*_value);
         int32_t old = (av / divisor % 10) * divisor;
         av = av - old + digit * divisor;
         *_value = neg ? -av : av;
