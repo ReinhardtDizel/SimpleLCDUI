@@ -14,6 +14,9 @@
 #include <string.h>
 #include <stdio.h>
 
+// Forward declaration
+template<typename Display> class Window;
+
 namespace SimpleLCDUI_Utils {
     template <typename T> T clamp(T val, T lo, T hi) { return val < lo ? lo : val > hi ? hi : val; }
     template <typename T> T absVal(T x) { return x < 0 ? -x : x; }
@@ -163,8 +166,7 @@ public:
     }
 
     uint8_t getWidth() const override {
-        // длина метки + "X.XXX" (5 символов минимум) + пробел = strlen(label) + 6
-        return strlen(this->_label) + 6;
+        return strlen(this->_label) + 6;   // "X.XXX " (5 + 1 пробел)
     }
 };
 
@@ -189,8 +191,7 @@ public:
     }
 
     uint8_t getWidth() const override {
-        // длина метки + "XX.XX" (5 символов) + пробел = strlen(label) + 6
-        return strlen(this->_label) + 6;
+        return strlen(this->_label) + 6;   // "XX.XX " (5 + 1 пробел)
     }
 };
 
@@ -210,8 +211,7 @@ public:
     }
 
     uint8_t getWidth() const override {
-        // label + "XXXXX  " – грубо берём 5 цифр + 2 пробела
-        return strlen(this->_label) + 7;
+        return strlen(this->_label) + 7;   // "XXXXX  " (5 цифр + 2 пробела)
     }
 };
 
