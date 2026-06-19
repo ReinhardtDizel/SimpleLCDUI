@@ -49,7 +49,7 @@ lib_deps =
 Or place the library folder manually in the lib/ directory of your project.
 
 Quick Start
-cpp
+```cpp
 #include <MELT_MT24S2A.h>      // your display (implements IDisplay)
 #include <SimpleLCDUI.h>
 
