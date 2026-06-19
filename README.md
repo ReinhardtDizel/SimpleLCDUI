@@ -1,35 +1,37 @@
+markdown
 # SimpleLCDUI
 
 **A lightweight UI framework for character LCDs with editable fields and multi‑window navigation.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![PlatformIO](https://img.shields.io/badge/PlatformIO-Ready-orange)](https://platformio.org)
-[![Arduino](https://img.shields.io/badge/Arduino-Compatible-green)](https://www.arduino.cc)
 
 ## Overview
 
-SimpleLCDUI provides a simple way to build configuration menus on HD44780‑compatible character LCDs (16x2, 20x4, etc.). It handles:
+SimpleLCDUI is a template-based C++ library that provides a simple way to build configuration menus on HD44780‑compatible character LCDs (16x2, 20x4, etc.). It handles:
 
 - **Multiple windows** – switch between different screens.
-- **Editable fields** – integer, floating point, toggle (`<Да>`/`<Отм>`).
+- **Editable fields** – integer (digit-by-digit or linear), floating point, toggle (`<Да>`/`<Отм>`).
 - **Cursor blinking** – visual feedback during editing.
 - **Navigation** – move between fields and windows using external buttons.
 
-The library works with any display that implements the `IDisplay` interface – see [MELT_MT24S2A](https://github.com/ReinhardtDizel/MELT_MT24S2A) for an example that supports the Russian МЭЛТ MT-24S2A display.
+The library works with any display class that provides the required methods (duck typing). It does **not** require abstract interfaces or virtual functions – just pass your display object as a template parameter.
 
 ## Features
 
 - **Multi‑window** – create as many screens as you need.
 - **Field types**:
-  - `IntField` – integer with digit‑by‑digit editing.
-  - `LinearIntField` – integer with simple +/- increment.
+  - `LabelField` – plain text label.
+  - `IntField` – integer with digit‑by‑digit editing and cursor blink.
+  - `LinearIntField` – integer with simple +/- increment (e.g., tension adjustment).
   - `FloatField` – read‑only float with 3 decimal places.
   - `FreqField` – frequency display with 2 decimal places.
-  - `ToggleField` – boolean `Yes`/`Cancel` field.
-  - `FloatEditField` – editable float.
+  - `IntDispField` – read‑only integer.
+  - `ToggleField` – boolean field showing `<Да>`/`<Отм>`.
+  - `FloatEditField` – editable float with 2 decimal places.
 - **Editor** – handles cursor position, blinking, and field switching.
-- **Platform independent** – uses abstract `IDisplay`, no hardware dependencies.
-- **Lightweight** – minimal RAM usage, suited for ATmega328.
+- **UIManager** – connects windows, editor, and button events.
+- **Platform independent** – uses only `getMillis()` from the display, no Arduino dependencies.
+- **Lightweight** – all code is inline, minimal RAM usage.
 
 ## Installation
 
@@ -40,32 +42,28 @@ The library works with any display that implements the `IDisplay` interface – 
 
 ### PlatformIO
 Add the following to your `platformio.ini`:
-```ini 
+```ini
 lib_deps =
     https://github.com/ReinhardtDizel/SimpleLCDUI.git
-
 ```
-
-Or place the library folder manually in the lib/ directory of your project.
+Or copy the library folder into the lib/ directory of your project.
 
 Quick Start
 ```cpp
-#include <MELT_MT24S2A.h>      // your display (implements IDisplay)
+#include <MELT_MT24S2A.h>      // your display class (must have printRus, printIntBlink, getMillis, etc.)
 #include <SimpleLCDUI.h>
 
 MELT_MT24S2A lcd(6, 8, 9,10,11,12,13,14,15,16);
-IDisplay &display = lcd;       // reference to the interface
 
 int32_t myValue = 42;
-IntField f(0, 0, "Val=", &myValue, 0, 5);   // col, row, label, value, id, width
+IntField<MELT_MT24S2A> f(0, 0, "Val=", &myValue, 0, 5, lcd);
 
-Field* allFields[] = { &f };
-Field* editFields[] = { &f };
-Window mainWindow(allFields, 1, editFields, 1);
-Window* windows[] = { &mainWindow };
-const int windowCount = 1;
+Field<MELT_MT24S2A>* allFields[] = { &f };
+Field<MELT_MT24S2A>* editFields[] = { &f };
+Window<MELT_MT24S2A> mainWindow(allFields, 1, editFields, 1, lcd);
+Window<MELT_MT24S2A>* windows[] = { &mainWindow };
 
-UIManager ui(display, windows, windowCount);
+UIManager<MELT_MT24S2A> ui(lcd, windows, 1);
 
 void setup() {
   lcd.begin(24, 2);
@@ -85,10 +83,29 @@ void loop() {
 See the examples folder for a complete working example.
 
 Dependencies
-IDisplay – an abstract interface that your display class must implement.
-The library includes IDisplay.h; you only need to provide the concrete implementation (e.g., MELT_MT24S2A).
+The library itself has no external dependencies. It expects the display class (Display) to provide the following methods:
 
-No other external libraries are required. Button handling is left to the user (recommended: OneButton).
+void begin(uint8_t cols, uint8_t rows)
+
+void clear()
+
+void setCursor(uint8_t col, uint8_t row)
+
+void write(uint8_t c)
+
+void print(const char* s)
+
+void printRus(const char* s)
+
+void printInt(int32_t n)
+
+void printIntBlink(int32_t n, int cursorPos, bool show)
+
+void clearField(int width)
+
+unsigned long getMillis()
+
+Your display class (e.g., MELT_MT24S2A) should implement these methods. The library will be instantiated with that class as a template parameter.
 
 License
 This library is released under the MIT License. See LICENSE for details.

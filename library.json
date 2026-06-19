@@ -1,24 +1,14 @@
 {
   "name": "SimpleLCDUI",
   "version": "1.0.0",
-  "description": "A lightweight UI framework for character LCDs with editable fields and multi-window navigation. Requires an IDisplay implementation.",
-  "keywords": [
-    "lcd",
-    "ui",
-    "menu",
-    "field",
-    "edit",
-    "navigation",
-    "display"
-  ],
-  "authors": [
-    {
-      "name": "Reinhardt Michael",
-      "email": "dizel882@gmail.com",
-      "url": "https://github.com/ReinhardtDizel",
-      "maintainer": true
-    }
-  ],
+  "description": "A lightweight UI framework for character LCDs with editable fields and multi-window navigation. Template-based, works with any display that provides the required methods.",
+  "keywords": ["lcd", "ui", "menu", "field", "edit", "navigation", "display"],
+  "authors": [{
+    "name": "Reinhardt Michael",
+    "email": "dizel882@gmail.com",
+    "url": "https://github.com/ReinhardtDizel",
+    "maintainer": true
+  }],
   "repository": {
     "type": "git",
     "url": "https://github.com/ReinhardtDizel/SimpleLCDUI.git"
@@ -27,20 +17,16 @@
   "homepage": "https://github.com/ReinhardtDizel/SimpleLCDUI",
   "frameworks": "arduino",
   "platforms": "*",
-  "headers": [
-    "SimpleLCDUI.h"
-  ],
+  "headers": ["SimpleLCDUI.h"],
   "export": {
     "include": ["src"],
     "exclude": ["examples", ".git"]
   },
-  "examples": [
-    {
-      "name": "Basic",
-      "base": "examples/basic",
-      "files": ["examples/basic/basic.ino"]
-    }
-  ],
+  "examples": [{
+    "name": "Basic",
+    "base": "examples/basic",
+    "files": ["examples/basic/basic.ino"]
+  }],
   "dependencies": [],
   "build": {
     "flags": "-Wall -Wextra",
