@@ -40,10 +40,11 @@ The library works with any display that implements the `IDisplay` interface – 
 
 ### PlatformIO
 Add the following to your `platformio.ini`:
-```ini
+```ini 
 lib_deps =
     https://github.com/ReinhardtDizel/SimpleLCDUI.git
 
+```
 
 Or place the library folder manually in the lib/ directory of your project.
 
@@ -80,6 +81,7 @@ void loop() {
   // ...
   ui.update();
 }
+```cpp
 See the examples folder for a complete working example.
 
 Dependencies
