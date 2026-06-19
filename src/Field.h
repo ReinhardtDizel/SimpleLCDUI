@@ -119,5 +119,164 @@ public:
     uint8_t getWidth() const { return strlen(this->_label) + _maxDigits; }
 };
 
-// ... (остальные классы полей – LinearIntField, FloatField, FreqField, IntDispField, ToggleField, FloatEditField –
-//      полностью аналогичны, но без virtual. Здесь они опущены для краткости, но в реальном файле присутствуют.)
+template<typename Display>
+class LinearIntField : public Field<Display> {
+    int32_t* _value;
+    int32_t _minVal, _maxVal;
+    int _width;
+public:
+    LinearIntField(uint8_t col, uint8_t row, const char* label, int32_t* val, int fieldId,
+                   int32_t minV, int32_t maxV, int width, Display& disp, uint8_t rowHint = 0)
+        : Field<Display>(col, row, label, false, fieldId, disp, rowHint), _value(val),
+          _minVal(minV), _maxVal(maxV), _width(width) {}
+
+    void draw(bool editMode, int cursorPos, bool blinkState) {
+        this->_disp.setCursor(this->_col, this->_row);
+        this->_disp.print(this->_label);
+        this->_disp.setCursor(this->_col + strlen(this->_label), this->_row);
+        for (int i = 0; i < _width; i++) this->_disp.write(' ');
+        this->_disp.setCursor(this->_col + strlen(this->_label), this->_row);
+        char buf[4];
+        snprintf(buf, sizeof(buf), "%d", *_value);
+        if (editMode && !blinkState) this->_disp.write(' ');
+        else this->_disp.print(buf);
+    }
+
+    void modifyDigit(int delta, int cursorPos) {
+        *_value = SimpleLCDUI_Utils::clamp(*_value + delta, _minVal, _maxVal);
+    }
+
+    int getMaxDigits() { return _width; }
+    uint8_t getWidth() const { return strlen(this->_label) + _width; }
+};
+
+template<typename Display>
+class FloatField : public Field<Display> {
+    float* _value;
+public:
+    FloatField(uint8_t col, uint8_t row, const char* label, float* val, Display& disp,
+               uint8_t rowHint = 0)
+        : Field<Display>(col, row, label, false, -1, disp, rowHint), _value(val) {}
+
+    void draw(bool, int, bool) {
+        this->_disp.setCursor(this->_col, this->_row);
+        this->_disp.print(this->_label);
+        char buf[10];
+        SimpleLCDUI_Utils::floatToFixed3(*_value, buf, sizeof(buf));
+        this->_disp.print(buf);
+        this->_disp.print(" ");
+    }
+
+    uint8_t getWidth() const {
+        return strlen(this->_label) + 6;   // "X.XXX " (5 + 1 пробел)
+    }
+};
+
+template<typename Display>
+class FreqField : public Field<Display> {
+    float* _value;
+public:
+    FreqField(uint8_t col, uint8_t row, const char* label, float* val, Display& disp,
+              uint8_t rowHint = 0)
+        : Field<Display>(col, row, label, false, -1, disp, rowHint), _value(val) {}
+
+    void draw(bool, int, bool) {
+        this->_disp.setCursor(this->_col, this->_row);
+        this->_disp.print(this->_label);
+        int whole = (int)(*_value);
+        int frac = (int)((*_value - whole) * 100 + 0.5);
+        if (frac >= 100) { whole++; frac = 0; }
+        char buf[10];
+        snprintf(buf, sizeof(buf), "%d.%02d", whole, frac);
+        this->_disp.print(buf);
+        this->_disp.print(" ");
+    }
+
+    uint8_t getWidth() const {
+        return strlen(this->_label) + 6;   // "XX.XX " (5 + 1 пробел)
+    }
+};
+
+template<typename Display>
+class IntDispField : public Field<Display> {
+    int32_t* _value;
+public:
+    IntDispField(uint8_t col, uint8_t row, const char* label, int32_t* val, Display& disp,
+                 uint8_t rowHint = 0)
+        : Field<Display>(col, row, label, false, -1, disp, rowHint), _value(val) {}
+
+    void draw(bool, int, bool) {
+        this->_disp.setCursor(this->_col, this->_row);
+        this->_disp.print(this->_label);
+        this->_disp.printInt(*_value);
+        this->_disp.print("  ");
+    }
+
+    uint8_t getWidth() const {
+        return strlen(this->_label) + 7;   // "XXXXX  " (5 цифр + 2 пробела)
+    }
+};
+
+template<typename Display>
+class ToggleField : public Field<Display> {
+    bool* _value;
+public:
+    ToggleField(uint8_t col, uint8_t row, bool* val, int fieldId, Display& disp,
+                uint8_t rowHint = 0)
+        : Field<Display>(col, row, "", false, fieldId, disp, rowHint), _value(val) {}
+
+    void draw(bool editMode, int cursorPos, bool blinkState) {
+        this->_disp.setCursor(this->_col, this->_row);
+        if (editMode && !blinkState) {
+            for (int i = 0; i < 4; i++) this->_disp.write(' ');
+        } else {
+            this->_disp.print(*_value ? "<Да>" : "<Отм>");
+        }
+    }
+
+    void modifyDigit(int delta, int cursorPos) { *_value = !(*_value); }
+    int getMaxDigits() { return 1; }
+    uint8_t getWidth() const { return 4; }
+};
+
+template<typename Display>
+class FloatEditField : public Field<Display> {
+    float* _value;
+    int _width;
+public:
+    FloatEditField(uint8_t col, uint8_t row, const char* label, float* val, int fieldId,
+                   int width, Display& disp, uint8_t rowHint = 0)
+        : Field<Display>(col, row, label, false, fieldId, disp, rowHint), _value(val), _width(width) {}
+
+    void draw(bool editMode, int cursorPos, bool blinkState) {
+        this->_disp.setCursor(this->_col, this->_row);
+        this->_disp.print(this->_label);
+        this->_disp.setCursor(this->_col + strlen(this->_label), this->_row);
+        for (int i = 0; i < _width; i++) this->_disp.write(' ');
+        this->_disp.setCursor(this->_col + strlen(this->_label), this->_row);
+        int whole = (int)(*_value);
+        int frac = (int)((*_value - whole) * 100 + 0.5);
+        char buf[8];
+        snprintf(buf, sizeof(buf), "%d.%02d", whole, frac);
+        int len = strlen(buf);
+        if (cursorPos >= len) cursorPos = len - 1;
+        if (editMode) {
+            for (int i = 0; i < len; i++) {
+                if (i == cursorPos && !blinkState) this->_disp.write(' ');
+                else this->_disp.write(buf[i]);
+            }
+        } else {
+            this->_disp.print(buf);
+        }
+    }
+
+    void modifyDigit(int delta, int cursorPos) {
+        *_value += delta * 0.01f;
+        if (*_value < 0) *_value = 0;
+        if (*_value > 99.99f) *_value = 99.99f;
+    }
+    int getMaxDigits() { return _width; }
+    uint8_t getWidth() const { return strlen(this->_label) + _width; }
+};
+
+#endif
