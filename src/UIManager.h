@@ -21,7 +21,7 @@ public:
      * @param windows Массив указателей на окна.
      * @param windowCount Количество окон.
      */
-    UIManager(Display& disp, Window<Display>** windows, int windowCount)
+    UIManager<Display>(Display& disp, Window<Display>** windows, int windowCount)
         : _disp(disp), _windows(windows), _windowCount(windowCount),
           _currentWindow(0), _lastRedraw(0), _editor(disp) {}
 
