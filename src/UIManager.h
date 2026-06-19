@@ -5,7 +5,6 @@
 #ifndef UIMANAGER_H
 #define UIMANAGER_H
 
-#include <stdint.h>
 #include "Window.h"
 #include "Editor.h"
 
@@ -38,6 +37,25 @@ public:
         _currentWindow = (_currentWindow + 1) % _windowCount;
         if (_windows[_currentWindow]) _windows[_currentWindow]->setNeedsFullRedraw();
     }
+
+    /**
+     * @brief Установить текущее окно по индексу (0..windowCount-1).
+     * @param index Индекс окна.
+     */
+    void setCurrentWindow(int index) {
+        if (index >= 0 && index < _windowCount) {
+            _currentWindow = index;
+            if (_windows[_currentWindow]) _windows[_currentWindow]->setNeedsFullRedraw();
+        }
+    }
+
+    /** @return Указатель на окно по индексу (или nullptr, если индекс неверен) */
+    Window<Display>* getWindow(int index) const {
+        return (index >= 0 && index < _windowCount) ? _windows[index] : nullptr;
+    }
+
+    /** @return Ссылка на редактор */
+    Editor<Display>& getEditor() { return _editor; }
 
     /** Короткое нажатие Enter: сдвиг курсора или вход в редактор */
     void editAction() {

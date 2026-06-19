@@ -9,6 +9,7 @@
 #ifndef FIELD_H
 #define FIELD_H
 
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 

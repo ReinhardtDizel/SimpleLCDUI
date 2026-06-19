@@ -5,7 +5,6 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include <stdint.h>
 #include "Field.h"
 
 /**

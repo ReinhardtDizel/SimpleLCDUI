@@ -5,7 +5,6 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <stdint.h>
 #include "Field.h"
 
 /**
